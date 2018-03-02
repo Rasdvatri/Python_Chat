@@ -1,5 +1,5 @@
 import sys
-import json
+# import json
 import time
 from socket import socket, AF_INET, SOCK_STREAM
 from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message
