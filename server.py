@@ -1,39 +1,8 @@
 import sys
 import time
 from socket import socket, AF_INET, SOCK_STREAM
-from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message
+from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message, convert_float_to_str
 from jim.config import *
-
-
-def presence_response(presence_message):
-    """
-    Формирование ответа клиенту
-    :param presence_message: Словарь presence запроса
-    :return: Словарь ответа
-    """
-    # Делаем проверки
-    if ACTION in presence_message and \
-                    presence_message[ACTION] == PRESENCE and \
-                    TIME in presence_message and \
-            isinstance(presence_message[TIME], float):
-        # Если всё хорошо шлем ОК
-        return {RESPONSE: 200}
-    else:
-        # Шлем код ошибки
-        return {RESPONSE: 400, ERROR: 'Не верный запрос'}
-
-
-def convert_float_to_str(time_float):
-    """
-    функция переводит время-float в читаемый формат ДД.ММ.ГГГГ ЧЧ:ММ
-    :param time_float: время в FLOAT
-    :return: время в STR
-    """
-    if isinstance(time_float, float):
-        convert_time = time.strftime("%d.%m.%Y %H:%M", time.strptime(time.ctime(time_float)))
-        return convert_time
-    else:
-        return TypeError
 
 
 def past_time_to_dict(client_message):
@@ -54,6 +23,28 @@ def past_time_to_dict(client_message):
         return message_for_output
     else:
         raise TypeError
+
+
+def presence_response(presence_message):
+    """
+    Формирование ответа клиенту
+    :param presence_message: Словарь presence запроса
+    :return: Словарь ответа
+    """
+    # Делаем проверки
+    if ACTION in presence_message and \
+                    presence_message[ACTION] == PRESENCE and \
+                    TIME in presence_message and \
+            isinstance(presence_message[TIME], float):
+        # Если всё хорошо шлем ОК
+        message_time = time.time()
+        message = {RESPONSE: 200,
+                   TIME: message_time}
+        return message
+        # return {RESPONSE: 200}
+    else:
+        # Шлем код ошибки
+        return {RESPONSE: 400, ERROR: 'Не верный запрос'}
 
 
 if __name__ == "__main__":
