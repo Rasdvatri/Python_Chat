@@ -1,4 +1,4 @@
-import json
+import json, time
 
 # Кодировка
 ENCODING = 'utf-8'
@@ -72,41 +72,15 @@ def get_message(sock):
     # возвращаем словарь
     return response
 
-#
-# def str_to_bytes(mess_str):
-#     '''
-#     Преобразование строки в байты
-#     :param mess_str: строка
-#     :return: байты
-#     '''
-#     if isinstance(mess_str, str):
-#         # Преобразование строки в json
-#         jstr = json.dumps(mess_str)
-#         # Переводим json в байты
-#         bstr = jstr.encode(ENCODING)
-#         # Возвращаем байты
-#         return bstr
-#     else:
-#         raise TypeError
-#
-# def bytes_to_str(mess_bytes):
-#     '''
-#     Получение строки из байтов
-#     :param mess_bytes: байты
-#     :return: строка
-#     '''
-#     if isinstance(mess_bytes, bytes):
-#         # Декодируем
-#         jbyts = mess_bytes.decode(ENCODING)
-#         # Из json делаем строку
-#         message = json.loads(jbyts)
-#         # Если там строка
-#         if isinstance(message, str):
-#             # Возвращаем сообщение
-#             return message
-#         else:
-#             # Нам прислали неверный тип
-#             raise TypeError
-#     else:
-#         # Передан неверный тип
-#         raise TypeError
+
+def convert_float_to_str(time_float):
+    """
+    функция переводит время-float в читаемый формат ДД.ММ.ГГГГ ЧЧ:ММ
+    :param time_float: время в FLOAT
+    :return: время в STR
+    """
+    if isinstance(time_float, float):
+        convert_time = time.strftime("%d.%m.%Y %H:%M:%S", time.strptime(time.ctime(time_float)))
+        return convert_time
+    else:
+        return TypeError
