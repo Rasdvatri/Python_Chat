@@ -1,7 +1,7 @@
 import sys
 import time
 from socket import socket, AF_INET, SOCK_STREAM
-from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message
+from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message, convert_float_to_str
 from jim.config import *
 
 
@@ -25,15 +25,15 @@ def decode_message(server_response):
     if RESPONSE in server_response and \
             isinstance(server_response[RESPONSE], int):
         if server_response[RESPONSE] == OK:
-            return 'OK'
+            return 'OK', convert_float_to_str(server_response[TIME])
         elif server_response[RESPONSE] == BASIC_NOTICE:
-            return 'BASIC_NOTICE'
+            return 'BASIC_NOTICE', convert_float_to_str(server_response[TIME])
         elif server_response[RESPONSE] == ACCEPTED:
-            return 'ACCEPTED'
+            return 'ACCEPTED', convert_float_to_str(server_response[TIME])
         elif server_response[RESPONSE] == WRONG_REQUEST:
-            return 'WRONG_REQUEST'
+            return 'WRONG_REQUEST', convert_float_to_str(server_response[TIME])
         elif server_response[RESPONSE] == SERVER_ERROR:
-            return 'SERVER_ERROR'
+            return 'SERVER_ERROR', convert_float_to_str(server_response[TIME])
         else:
             return 'Неопределен ответ сервера'
     else:
