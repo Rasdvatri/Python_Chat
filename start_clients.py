@@ -13,7 +13,7 @@ while True:
             # чтобы каждый процесс запускался в отдельном окне консоли
             # p_list.append(Popen('d:\StruganovOV\Python36-32\python.exe client.py localhost 7777',
             #                     creationflags=CREATE_NEW_CONSOLE))
-            p_list.append(Popen('python client.py localhost 7777 r',
+            p_list.append(Popen('python client.py localhost 7777',
                                 creationflags=CREATE_NEW_CONSOLE))
 
             time.sleep(delay)
