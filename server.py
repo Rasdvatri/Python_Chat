@@ -1,90 +1,140 @@
-import sys
 import time
+import select
+import collections
 from socket import socket, AF_INET, SOCK_STREAM
-from jim.utils import dict_to_bytes, bytes_to_dict, send_message, get_message, convert_float_to_str
-from jim.config import *
+from jim.utils import add_address_and_port, convert_float_to_str, bytes_to_dict, dict_to_bytes
+import jim.config as cfg
 
 
-def past_time_to_dict(client_message):
-    """
-    функция формирет данные для печати
-    :param client_message: сообщение от клиента
-    :return: словарь с сконвертированным TIME
-    """
-    # проверяем тип данных на DICT
-    if isinstance(client_message, dict):
-        # содал новый словарь
-        message_for_output = {}
-        # скопировал все данные в новый словарь
-        message_for_output.update(client_message)
-        # обновил TIME сконвертированными данными
-        message_for_output.update({TIME: convert_float_to_str(client_message[TIME])})
-        # Данные для печати
-        return message_for_output
-    else:
-        raise TypeError
+class Server():
+
+    def __init__(self):
+        self._clients = list()
+        self._sock = socket(AF_INET, SOCK_STREAM)
+        self._sock.bind(add_address_and_port('server'))
+        self._sock.settimeout(0.2)
+        self._sock.listen(5)
+        self._requests = collections.deque()
+
+    def connect(self):
+        """
+
+        :return:
+        """
+        try:
+            client, address = self._sock.accept()
+            print("Получен запрос на соединение от {}".format(address))
+            self._clients.append(client)
+        except OSError:
+            pass
+
+    def past_time_to_dict(self, client_message):
+        """
+        Метод формирует данные для печати
+        :param client_message: сообщение от клиента
+        :return: словарь с сконвертированным TIME
+        """
+        # проверяем тип данных на DICT
+        if isinstance(client_message, dict):
+            # содал новый словарь
+            message_for_output = {}
+            # скопировал все данные в новый словарь
+            message_for_output.update(client_message)
+            # обновил TIME сконвертированными данными
+            message_for_output.update({cfg.TIME: convert_float_to_str(client_message[cfg.TIME])})
+            # Данные для печати
+            return message_for_output
+        else:
+            raise TypeError
+
+    def presence_response(self, presence_message):
+        """
+        Формирование ответа клиенту
+        :param presence_message: Словарь presence запроса
+        :return: Словарь ответа
+        """
+        # Делаем проверки
+        if cfg.ACTION in presence_message and \
+                presence_message[cfg.ACTION] == cfg.PRESENCE and \
+                cfg.TIME in presence_message and \
+                isinstance(presence_message[cfg.TIME], float):
+            # Если всё хорошо шлем ОК и время
+            message_time = time.time()
+            message = {cfg.RESPONSE: 200,
+                       cfg.TIME: message_time}
+            return message
+            # return {RESPONSE: 200}
+        else:
+            # Шлем код ошибки
+            return {cfg.RESPONSE: 400, cfg.ERROR: 'Не верный запрос'}
+
+    def read(self, client):
+        """
+
+        :param client:
+        :return:
+        """
+        try:
+            message = self._sock.recv(client)
+            if message:
+                response = bytes_to_dict(message)
+                self._requests.append(response)
+        except:
+            if client in self._clients:
+                self._clients.remove(client)
+
+    def write(self, client, requests):
+        """
+
+        :param client:
+        :param requests:
+        :return:
+        """
+        try:
+            message = dict_to_bytes(requests)
+            client.send(message)
+            self.past_time_to_dict(message)
+        except (ConnectionResetError, BrokenPipeError):
+            if client in self._clients:
+                self._clients.remove(client)
+
+    def mainloop(self):
+        """
+        Основной цикл обработки запросов клиентов
+        :return:
+        """
+        try:
+            while True:
+                try:
+                    client, address = self._sock.accept()
+                # accept() - блокирует приложение до тех пор, пока не придет сообщение от клиента.
+                # Функция возвращает кортеж из двух параметров – объект самого соединения и адрес клиента.
+                except OSError as e:
+                    pass
+                else:
+                    print("Получен запрос на соединение от {}".format(address))
+                    self._clients.append(client)
+                finally:
+                    r = []
+                    w = []
+                    try:
+                        r, w, e = select.select(self._clients, self._clients, [], 0)
+                    except Exception as e:
+                        pass
+                    for client in r:
+                        self.read(client)
+
+                    if self._requests:
+                        requests = self._requests.popleft()
+
+                        for client in w:
+                            self.write(client, requests)
+        except KeyboardInterrupt:
+            pass
+
+    print('Эхо-сервер запущен')
 
 
-def presence_response(presence_message):
-    """
-    Формирование ответа клиенту
-    :param presence_message: Словарь presence запроса
-    :return: Словарь ответа
-    """
-    # Делаем проверки
-    if ACTION in presence_message and \
-                    presence_message[ACTION] == PRESENCE and \
-                    TIME in presence_message and \
-            isinstance(presence_message[TIME], float):
-        # Если всё хорошо шлем ОК
-        message_time = time.time()
-        message = {RESPONSE: 200,
-                   TIME: message_time}
-        return message
-        # return {RESPONSE: 200}
-    else:
-        # Шлем код ошибки
-        return {RESPONSE: 400, ERROR: 'Не верный запрос'}
-
-
-if __name__ == "__main__":
-    server = socket(AF_INET, SOCK_STREAM)  # Определяю протокол TCP
-    # В командной строке принимается запрос с аргументами следующего вида:
-    # python server.py <serv_addr> <port>
-    # FOR ME
-    # at home:
-    # cd C:/Users/Admin/YandexDisk/!_Learning/!_Python/2_Python/lesson1
-    # python server.py "" 7777
-    # at work:
-    # cd D:/StruganovOV/py_scr/python2
-    # d:\StruganovOV\Python36-32\python.exe server.py "" 7777
-    # at Windows PowerShell:
-    # python server.py '""' 7777
-    try:
-        serv_addr = sys.argv[1]
-    except IndexError:
-        serv_addr = ''
-    try:
-        serv_port = int(sys.argv[2])
-    except IndexError:
-        serv_port = 7777
-    except ValueError:
-        print('Порт должен быть целым числом')
-        sys.exit(0)
-
-    server.bind((serv_addr, serv_port))  # принимаю адрес и порт в виде кортежа
-    server.listen(5)  # количество подключений
-
-    while True:
-        client, serv_addr = server.accept()
-        # accept() - блокирует приложение до тех пор, пока не придет сообщение от клиента.
-        # Функция возвращает кортеж из двух параметров – объект самого соединения и адрес клиента.
-        print("Получен запрос на соединение от {}".format(serv_addr))
-        # получаю сообщение отклиента
-        presence = get_message(client)
-        print(past_time_to_dict(presence))
-        # Формирую ответ
-        response = presence_response(presence)
-        # отправляю ответ клиенту
-        send_message(client, response)
-        client.close()
+if __name__ == '__main__':
+    server = Server()
+    server.mainloop()
