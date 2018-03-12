@@ -9,6 +9,9 @@ import jim.config as cfg
 class Server():
 
     def __init__(self):
+        """
+
+        """
         self._clients = list()
         self._sock = socket(AF_INET, SOCK_STREAM)
         self._sock.bind(add_address_and_port('server'))
