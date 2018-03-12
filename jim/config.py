@@ -1,4 +1,13 @@
 """Константы для jim протокола, настройки"""
+# Константы
+S_HOST = ''
+C_HOST = 'localhost'
+PORT = 7777
+NUM_CLIENT = 5
+TIMEOUT = 0
+
+TYPE = ['write', 'read']
+
 # Ключи
 ACTION = 'action'
 TIME = 'time'
