@@ -1,4 +1,6 @@
-import json, time, sys
+import json
+import time
+import sys
 
 # Кодировка
 ENCODING = 'utf-8'
