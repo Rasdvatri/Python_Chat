@@ -1,7 +1,37 @@
-import json, time
+import json, time, sys
 
 # Кодировка
 ENCODING = 'utf-8'
+
+
+def add_address_and_port(sock):
+    """
+    Получение адреса и порта для коннекта сокета
+    :param sock: идентификатор 'server'/'client'
+    :return: кортеж из адреса и порта
+    """
+    # Определяем адрес
+    addr = ''
+    if sock == 'server':
+        try:
+            addr = sys.argv[1]
+        except IndexError:
+            addr = ''
+    elif sock == 'client':
+        try:
+            addr = sys.argv[1]
+        except IndexError:
+            addr = 'localhost'
+    # Определяем порт
+    try:
+        port = int(sys.argv[2])
+    except IndexError:
+        port = 7777
+    except ValueError:
+        print('Порт должен быть целым числом')
+        sys.exit(0)
+    # возвращаем кортеж
+    return (addr, port)
 
 
 def dict_to_bytes(message_dict):
