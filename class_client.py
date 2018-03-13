@@ -1,6 +1,7 @@
 import time
 from socket import socket, AF_INET, SOCK_STREAM
-from jim.utils import add_address_and_port, convert_float_to_str, bytes_to_dict, send_message
+from jim.utils import add_address_and_port, convert_float_to_str, bytes_to_dict, send_message, type_clients, \
+    add_message_to_dict, get_message
 import jim.config as cfg
 from subprocess import Popen, CREATE_NEW_CONSOLE
 
@@ -34,15 +35,20 @@ class Client():
         if cfg.RESPONSE in server_response and \
                 isinstance(server_response[cfg.RESPONSE], int):
             if server_response[cfg.RESPONSE] == cfg.OK:
-                return 'OK', convert_float_to_str(server_response[cfg.TIME])
+                return 'OK', convert_float_to_str(server_response[cfg.TIME]),\
+                       server_response[cfg.INFO]
             elif server_response[cfg.RESPONSE] == cfg.BASIC_NOTICE:
-                return 'BASIC_NOTICE', convert_float_to_str(server_response[cfg.TIME])
+                return 'BASIC_NOTICE', convert_float_to_str(server_response[cfg.TIME]),\
+                       server_response[cfg.INFO]
             elif server_response[cfg.RESPONSE] == cfg.ACCEPTED:
-                return 'ACCEPTED', convert_float_to_str(server_response[cfg.TIME])
+                return 'ACCEPTED', convert_float_to_str(server_response[cfg.TIME]),\
+                       server_response[cfg.INFO]
             elif server_response[cfg.RESPONSE] == cfg.WRONG_REQUEST:
-                return 'WRONG_REQUEST', convert_float_to_str(server_response[cfg.TIME])
+                return 'WRONG_REQUEST', convert_float_to_str(server_response[cfg.TIME]),\
+                       server_response[cfg.INFO]
             elif server_response[cfg.RESPONSE] == cfg.SERVER_ERROR:
-                return 'SERVER_ERROR', convert_float_to_str(server_response[cfg.TIME])
+                return 'SERVER_ERROR', convert_float_to_str(server_response[cfg.TIME]),\
+                       server_response[cfg.INFO]
             else:
                 return 'Неопределен ответ сервера'
         else:
@@ -52,9 +58,9 @@ class Client():
     def write(self):
         try:
             while True:
-                str_data = input('Enter data: ')
-                bytes_data = str_data.encode(cfg.ENCODING)
-                self.sock.send(bytes_data)
+                message = input('Введите текст сообщения: ')
+                message_dict = add_message_to_dict(message)
+                send_message(self.sock, message_dict)
         except KeyboardInterrupt:
             pass
 
@@ -62,9 +68,8 @@ class Client():
     def read(self):
         try:
             while True:
-                data = self.sock.recv(cfg.BUFFER_SIZE)
-                str_data = data.decode(cfg.ENCODING)
-                print(str_data)
+                message = get_message(self.sock)
+                print(message[cfg.TIME], message[cfg.MESSAGE])
         except KeyboardInterrupt:
             pass
 
@@ -74,8 +79,14 @@ class Client():
         send_message(self.sock, message)
         while True:
             #принимаю сообщение сервера
-            tm = bytes_to_dict(self.sock.recv(1024))
+            tm = get_message(self.sock)
             print(self.decode_message(tm))
+            if type_clients() == '-r':
+                self.read()
+            elif type_clients() == '-w':
+                self.write()
+            else:
+                pass
         self.sock.close()
 
 

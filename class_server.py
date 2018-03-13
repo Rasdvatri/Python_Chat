@@ -18,6 +18,7 @@ class Server():
         self._sock.settimeout(0.2)
         self._sock.listen(5)
         self._requests = collections.deque()
+        self.client_info = ''
 
     def connect(self):
         """
@@ -65,7 +66,8 @@ class Server():
             # Если всё хорошо шлем ОК и время
             message_time = time.time()
             message = {cfg.RESPONSE: 200,
-                       cfg.TIME: message_time}
+                       cfg.TIME: message_time,
+                       cfg.INFO: self.client_info}
             return message
             # return {RESPONSE: 200}
         else:
@@ -80,26 +82,23 @@ class Server():
         :return:
         """
         try:
-            message = self._sock.recv(client)
-            if message:
-                response = bytes_to_dict(message)
-                self._requests.append(response)
-        except:
+            message = get_message(client)
+            self._requests.append(message)
+            print(client, message[cfg.TIME], message[cfg.MESSAGE])
+        except (ConnectionResetError, BrokenPipeError):
             if client in self._clients:
                 self._clients.remove(client)
 
 
     def write(self, client, requests):
         """
-        
+
         :param client:
         :param requests:
         :return:
         """
         try:
-            message = dict_to_bytes(requests)
-            client.send(message)
-            self.past_time_to_dict(message)
+            send_message(client, requests)
         except (ConnectionResetError, BrokenPipeError):
             if client in self._clients:
                 self._clients.remove(client)
@@ -109,10 +108,12 @@ class Server():
         Основной цикл обработки запросов клиентов
         :return:
         """
+
         try:
             while True:
                 try:
                     client, address = self._sock.accept()
+                    self.client_info = address
                 # accept() - блокирует приложение до тех пор, пока не придет сообщение от клиента.
                 # Функция возвращает кортеж из двух параметров – объект самого соединения и адрес клиента.
                 except OSError as e:
@@ -133,10 +134,12 @@ class Server():
                         pass
                     for client in r:
                         self.read(client)
+
                     if self._requests:
                         requests = self._requests.popleft()
                         for client in w:
                             self.write(client, requests)
+
         except KeyboardInterrupt:
             pass
 

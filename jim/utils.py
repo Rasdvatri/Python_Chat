@@ -3,6 +3,28 @@ import time
 import sys
 import jim.config as cfg
 
+
+def add_message_to_dict(message):
+    message_dict = {
+        cfg.ACTION: cfg.PRESENCE,
+        cfg.TIME: convert_float_to_str(time.time()),
+        cfg.MESSAGE: message
+    }
+    return message_dict
+
+
+def type_clients():
+    """
+
+    :return:
+    """
+    try:
+        type_client = sys.argv[3]
+    except IndexError:
+        type_client = '-r'
+    return type_client
+
+
 def add_address_and_port(sock):
     """
     Получение адреса и порта для коннекта сокета
@@ -25,7 +47,7 @@ def add_address_and_port(sock):
     try:
         port = int(sys.argv[2])
     except IndexError:
-        port = 7777
+        port = 7778
     except ValueError:
         print('Порт должен быть целым числом')
         sys.exit(0)
