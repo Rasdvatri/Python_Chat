@@ -1,10 +1,7 @@
 import json
 import time
 import sys
-
-# Кодировка
-ENCODING = 'utf-8'
-
+import jim.config as cfg
 
 def add_address_and_port(sock):
     """
@@ -47,7 +44,7 @@ def dict_to_bytes(message_dict):
         # Преобразуем словарь в json
         jmessage = json.dumps(message_dict)
         # Переводим json в байты
-        bmessage = jmessage.encode(ENCODING)
+        bmessage = jmessage.encode(cfg.ENCODING)
         # Возвращаем байты
         return bmessage
     else:
@@ -63,7 +60,7 @@ def bytes_to_dict(message_bytes):
     # Если переданы байты
     if isinstance(message_bytes, bytes):
         # Декодируем
-        jmessage = message_bytes.decode(ENCODING)
+        jmessage = message_bytes.decode(cfg.ENCODING)
         # Из json делаем словарь
         message = json.loads(jmessage)
         # Если там был словарь

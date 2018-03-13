@@ -1,10 +1,15 @@
 """Константы для jim протокола, настройки"""
+
+# Кодировка
+ENCODING = 'utf-8'
+
 # Константы
 S_HOST = ''
 C_HOST = 'localhost'
 PORT = 7777
 NUM_CLIENT = 5
 TIMEOUT = 0
+BUFFER_SIZE = 1024
 
 TYPE = ['write', 'read']
 
