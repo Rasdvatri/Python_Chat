@@ -12,6 +12,7 @@ TIMEOUT = 0
 BUFFER_SIZE = 1024
 
 TYPE = ['write', 'read']
+CLIENT_INFO = 'client_info'
 
 # Ключи
 ACTION = 'action'
@@ -20,6 +21,9 @@ USER = 'user'
 ACCOUNT_NAME = 'account_name'
 RESPONSE = 'response'
 ERROR = 'error'
+MESSAGE = 'message'
+INFO = 'info'
+
 
 # Значения
 PRESENCE = 'presence'

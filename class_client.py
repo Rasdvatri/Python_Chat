@@ -1,28 +1,34 @@
 import time
+import sys
 from socket import socket, AF_INET, SOCK_STREAM
-from jim.utils import add_address_and_port, convert_float_to_str, bytes_to_dict, send_message, type_clients, \
-    add_message_to_dict, get_message
+from jim.utils import add_address_and_port, convert_float_to_str, send_message, get_message
 import jim.config as cfg
-from subprocess import Popen, CREATE_NEW_CONSOLE
 
 
 class Client():
 
     def __init__(self):
-        self.type = cfg.TYPE
+        """
+        Устанавливаю параметры по умолчанию
+        """
+        # Определяю протокол TCP/IP
         self.sock = socket(AF_INET, SOCK_STREAM)
+        # Отправляю адрес и порт
         self.sock.connect(add_address_and_port('client'))
 
 
     def presence_message(self):
         """
-        Формирую сообщение серверу
+        Формирую сообщение присутствия серверу
         :return: сообщение
         """
+        # дата/время в float
         message_time = time.time()
-        message = {cfg.ACTION: cfg.PRESENCE,
-                   cfg.TIME: message_time,
-                   }
+        # структура jim  сообщения
+        message = {
+            cfg.ACTION: cfg.PRESENCE,
+            cfg.TIME: message_time,
+        }
         return message
 
 
@@ -55,35 +61,85 @@ class Client():
             return 'Невреный ответ сервера'
 
 
+    def add_message_to_dict(self, message):
+        """
+        метод упаковки текста сообщения в словарь
+        :param message: текст из окна ввода
+        :return: возвращает словарь стандарта jim
+        """
+        message_dict = {
+            cfg.ACTION: cfg.PRESENCE,
+            cfg.TIME: convert_float_to_str(time.time()),
+            cfg.MESSAGE: message
+        }
+        return message_dict
+
+    def type_clients(self):
+        """
+        метод чтения ключа запуска клиента
+        '-r' - чтение сообщений (по умолчанию)
+        '-w' - отправка сообщение
+        :return: возвращает ключ
+        """
+        try:
+            type_client = sys.argv[3]
+        except IndexError:
+            type_client = '-r'
+        return type_client
+
+
     def write(self):
+        """
+        консоль для ввода сообщений
+        :return:
+        """
         try:
             while True:
+                # ввести сообщение
                 message = input('Введите текст сообщения: ')
-                message_dict = add_message_to_dict(message)
+                # упаовать сообщение в словарь структуры jim
+                message_dict = self.add_message_to_dict(message)
+                # отправить сообщение на сервер
                 send_message(self.sock, message_dict)
         except KeyboardInterrupt:
             pass
 
 
     def read(self):
+        """
+        чтение сообщений
+        :return:
+        """
         try:
             while True:
+                # получаем сообщение сервера от пишущего клиента
                 message = get_message(self.sock)
+                # публикуем сообщение в консоли читающего клиента
                 print(message[cfg.TIME], message[cfg.MESSAGE])
         except KeyboardInterrupt:
             pass
 
 
-    def start(self):
+    def mainloop(self):
+        """
+        основной цикл взаимодействия клиентов с сервером
+        :return:
+        """
+        # формирую сообщение присутствия
         message = self.presence_message()
+        # отправляюсообщение присутствия
         send_message(self.sock, message)
         while True:
-            #принимаю сообщение сервера
+            # принимаю сообщение-ответ сервера
             tm = get_message(self.sock)
+            # публикую сообщение-ответ сервера
             print(self.decode_message(tm))
-            if type_clients() == '-r':
+            # Смотрим ключ запуска клиента
+            if self.type_clients() == '-r':
+                # запускаем клиент на прием сообщений в чате
                 self.read()
-            elif type_clients() == '-w':
+            elif self.type_clients() == '-w':
+                # запускаем клиент на отправку сообщений в чате
                 self.write()
             else:
                 pass
@@ -92,4 +148,4 @@ class Client():
 
 if __name__ == '__main__':
     client = Client()
-    client.start()
+    client.mainloop()
